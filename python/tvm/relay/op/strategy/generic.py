@@ -829,3 +829,11 @@ def bitserial_dense_strategy(attrs, inputs, out_type, target):
         wrap_topi_schedule(topi.generic.schedule_bitserial_dense),
         name="bitserial_dense.generic")
     return strategy
+
+# corner pools
+@generic_func
+def schedule_corner_pools(attrs, outs, target):
+    with target:
+        outs = [outs] if isinstance(outs, te.tensor.Tensor) else outs
+        s = te.create_schedule([x.op for x in outs])
+        return s

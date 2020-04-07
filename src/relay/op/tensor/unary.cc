@@ -433,5 +433,21 @@ RELAY_REGISTER_UNARY_OP("isinf")
 .add_type_rel("IdentityCompRel", IdentityCompRel)
 .set_attr<FTVMCompute>("FTVMCompute", RELAY_UNARY_COMPUTE(topi::isinf));
 
+RELAY_REGISTER_UNARY_OP("top_pool")
+.describe(R"code(Hgt's custom op, top pooling.)code" TVM_ADD_FILELINE)
+.set_support_level(4);
+
+RELAY_REGISTER_UNARY_OP("bottom_pool")
+.describe(R"code(Hgt's custom op, bottom pooling.)code" TVM_ADD_FILELINE)
+.set_support_level(4);
+
+RELAY_REGISTER_UNARY_OP("left_pool")
+.describe(R"code(Hgt's custom op, left pooling.)code" TVM_ADD_FILELINE)
+.set_support_level(4);
+
+RELAY_REGISTER_UNARY_OP("right_pool")
+.describe(R"code(Hgt's custom op, right pooling.)code" TVM_ADD_FILELINE)
+.set_support_level(4);
+
 }  // namespace relay
 }  // namespace tvm

@@ -18,12 +18,14 @@
 """Backend compiler related feature registration"""
 import topi
 
+from tvm import te
 from tvm.runtime import convert
 from tvm.te.hybrid import script
 from topi.util import get_const_tuple
 from .op import register_compute, register_shape_func
-from .op import register_broadcast_schedule, register_injective_schedule
+from .op import register_broadcast_schedule, register_injective_schedule, register_schedule
 from .op import register_pattern, OpPattern
+from . import strategy
 
 
 register_broadcast_schedule("log")
@@ -222,3 +224,60 @@ register_shape_func("exp", False, elemwise_shape_func)
 register_shape_func("tan", False, elemwise_shape_func)
 register_shape_func("fast_exp", False, elemwise_shape_func)
 register_shape_func("fast_tanh", False, elemwise_shape_func)
+
+# top pool
+@register_compute("top_pool")
+def top_pool_compute(attrs, inputs, output_type):
+    assert len(inputs) == 1
+    X = inputs[0]
+    b, c, h, w = X.shape
+    s_state = te.placeholder(X.shape)
+    s_init = te.compute((b, c, 1, w), lambda i, j, _, k: X[i, j, h-1, k])
+    s_update = te.compute(X.shape, lambda i, j, t, k:
+                          te._ffi_api._OpMax(s_state[i, j, h-t, k], X[i, j, h-1-t, k]))
+    s_scan = tvm.te.scan(s_init, s_update, s_state, inputs=[X])
+    return [s_scan]
+
+# bottom pool
+@register_compute("bottom_pool")
+def bottom_pool_compute(attrs, inputs, output_type):
+    assert len(inputs) == 1
+    X = inputs[0]
+    b, c, h, w = X.shape
+    s_state = te.placeholder(X.shape)
+    s_init = te.compute((b, c, 1, w), lambda i, j, _, k: X[i, j, 0, k])
+    s_update = te.compute(X.shape, lambda i, j, t, k:
+                          te._ffi_api._OpMax(s_state[i, j, t-1, k], X[i, j, t, k]))
+    s_scan = tvm.te.scan(s_init, s_update, s_state, inputs=[X])
+    return [s_scan]
+
+# left pool
+@register_compute("left_pool")
+def left_pool_compute(attrs, inputs, output_type):
+    assert len(inputs) == 1
+    X = inputs[0]
+    b, c, h, w = X.shape
+    s_state = te.placeholder(X.shape)
+    s_init = te.compute((b, c, h, q), lambda i, j, k, _: X[i, j, k, w-1])
+    s_update = te.compute(X.shape, lambda i, j, k, t:
+                          te._ffi_api._OpMax(s_state[i, j, k, w-t], X[i, j, k, w-1-t]))
+    s_scan = tvm.te.scan(s_init, s_update, s_state, inputs=[X])
+    return [s_scan]
+
+# right pool
+@register_compute("right_pool")
+def right_pool_compute(attrs, inputs, output_type):
+    assert len(inputs) == 1
+    X = inputs[0]
+    b, c, h, w = X.shape
+    s_state = te.placeholder(X.shape)
+    s_init = te.compute((b, c, h, q), lambda i, j, k, _: X[i, j, k, 0])
+    s_update = te.compute(X.shape, lambda i, j, k, t:
+                          te._ffi_api._OpMax(s_state[i, j, k, t-1], X[i, j, k, t]))
+    s_scan = tvm.te.scan(s_init, s_update, s_state, inputs=[X])
+    return [s_scan]
+
+register_schedule("top_pool", strategy.schedule_corner_pools)
+register_schedule("bottm_pool", strategy.schedule_corner_pools)
+register_schedule("left_pool", strategy.schedule_corner_pools)
+register_schedule("right_pool", strategy.schedule_corner_pools)
