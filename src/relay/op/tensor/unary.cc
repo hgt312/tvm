@@ -433,21 +433,30 @@ RELAY_REGISTER_UNARY_OP("isinf")
 .add_type_rel("IdentityCompRel", IdentityCompRel)
 .set_attr<FTVMCompute>("FTVMCompute", RELAY_UNARY_COMPUTE(topi::isinf));
 
-RELAY_REGISTER_UNARY_OP("top_pool")
-.describe(R"code(Hgt's custom op, top pooling.)code" TVM_ADD_FILELINE)
-.set_support_level(4);
+#define RELAY_REGISTER_CORNER_POOL(OpName)                             \
+  TVM_REGISTER_GLOBAL("relay.op._make." OpName)                        \
+  .set_body_typed([](Expr data) {                                      \
+    static const Op& op = Op::Get(OpName);                             \
+    return Call(op, {data}, Attrs(), {});                              \
+  });                                                                  \
+  RELAY_REGISTER_OP(OpName)                                            \
+  .describe(R"code(Custom op, top pooling.)code" TVM_ADD_FILELINE)     \
+  .set_num_inputs(1)                                                   \
+  .set_support_level(4)                                                \
+  .add_argument("data", "Tensor", "The input tensor.")                 \
+  .add_type_rel("Identity", IdentityRel)                               \
+  .set_attr<TOpPattern>("TOpPattern", kOpaque)                         \
+  .set_attr<TOpIsStateful>("TOpIsStateful", false)                     \
+  .set_attr<FInferCorrectLayout>("FInferCorrectLayout",                \
+                                 ElemwiseArbitraryLayout)              \
 
-RELAY_REGISTER_UNARY_OP("bottom_pool")
-.describe(R"code(Hgt's custom op, bottom pooling.)code" TVM_ADD_FILELINE)
-.set_support_level(4);
+RELAY_REGISTER_CORNER_POOL("top_pool");
 
-RELAY_REGISTER_UNARY_OP("left_pool")
-.describe(R"code(Hgt's custom op, left pooling.)code" TVM_ADD_FILELINE)
-.set_support_level(4);
+RELAY_REGISTER_CORNER_POOL("bottom_pool");
 
-RELAY_REGISTER_UNARY_OP("right_pool")
-.describe(R"code(Hgt's custom op, right pooling.)code" TVM_ADD_FILELINE)
-.set_support_level(4);
+RELAY_REGISTER_CORNER_POOL("left_pool");
+
+RELAY_REGISTER_CORNER_POOL("right_pool");
 
 }  // namespace relay
 }  // namespace tvm

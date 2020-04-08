@@ -1040,3 +1040,19 @@ def isinf(data):
         The computed result.
     """
     return _make.isinf(data)
+
+
+def top_pool(x):
+    return _make.top_pool(x)
+
+
+def bottom_pool(x):
+    return _make.bottom_pool(x)
+
+
+def left_pool(x):
+    return _make.left_pool(x)
+
+
+def right_pool(x):
+    return _make.right_pool(x)
