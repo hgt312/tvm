@@ -839,3 +839,15 @@ def schedule_corner_pools(attrs, outs, target):
         outs = [outs] if isinstance(outs, te.tensor.Tensor) else outs
         s = te.create_schedule([x.op for x in outs])
         return s
+
+def schedule_corner_pools_gpu(attrs, outs, target):
+    with target:
+        outs = [outs] if isinstance(outs, te.tensor.Tensor) else outs
+        s = te.create_schedule([x.op for x in outs])
+        thread_x = te.thread_axis("threadIdx.x")
+        s_scan = outs[0].op.input_tensors[0]
+        s_init, s_update = s_scan.op.input_tensors
+        s[outs[0]].bind(outs[0].op.axis[1], thread_x)
+        s[s_init].bind(s_init.op.axis[2], thread_x)
+        s[s_update].bind(s_update.op.axis[2], thread_x)
+        return s
