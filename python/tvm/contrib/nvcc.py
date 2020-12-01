@@ -265,7 +265,22 @@ def have_tensorcore(compute_version):
         compute capability of a GPU (e.g. "7.0")
     """
     major, _ = parse_compute_version(compute_version)
-    if major == 7:
+    if major >= 7:
+        return True
+
+    return False
+
+
+def have_bf16(compute_version):
+    """Either bf16 support is provided in the compute capability or not
+
+    Parameters
+    ----------
+    compute_version : str
+        compute capability of a GPU (e.g. "8.0")
+    """
+    major, _ = parse_compute_version(compute_version)
+    if major >= 8:
         return True
 
     return False
