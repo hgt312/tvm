@@ -95,9 +95,9 @@ def test_cuda_bf16_vectorize_add():
         xo, xi = s[B].split(B.op.axis[0], factor=num_thread)
         s[B].bind(xo, bx)
         s[B].bind(xi, tx)
-        with tvm.transform.PassContext(disabled_pass=["tir.BF16Promote",
-                                                      "tir.BF16CastElimination",
-                                                      "tir.BF16TypeLowering"]):
+        with tvm.transform.PassContext(
+            disabled_pass=["tir.BF16Promote", "tir.BF16CastElimination", "tir.BF16TypeLowering"]
+        ):
             fun = tvm.build(s, [A, B], "cuda")
         ctx = tvm.gpu(0)
         np_a = np.random.uniform(size=(n, lanes)).astype("float32")

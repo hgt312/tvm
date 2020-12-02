@@ -378,8 +378,8 @@ void CodeGenCUDA::PrintVecElemStore(const std::string& vec, DataType t, int i,
     stream << "((half2*)(&(" << vec << "." << access[i / 2] << ")))->" << access[i % 2] << " = "
            << value << ";\n";
   } else if (t.is_bfloat16()) {
-    stream << "((nv_bfloat162*)(&(" << vec << "." << access[i / 2] << ")))->" << access[i % 2] << " = "
-           << value << ";\n";
+    stream << "((nv_bfloat162*)(&(" << vec << "." << access[i / 2] << ")))->" << access[i % 2]
+           << " = " << value << ";\n";
   } else {
     stream << vec << "." << access[i] << " = " << value << ";\n";
   }
